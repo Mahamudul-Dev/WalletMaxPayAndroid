@@ -51,8 +51,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Set up full-screen mode for API level 30 and above
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val insetsController = window.insetsController
+            val insetsController = window.decorView.windowInsetsController
             if (insetsController != null) {
                 insetsController.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
                 insetsController.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -60,6 +61,7 @@ class MainActivity : ComponentActivity() {
             }
             window.setDecorFitsSystemWindows(false)
         } else {
+            // For older API levels, use the deprecated flag
             @Suppress("DEPRECATION")
             window.setFlags(
                 WindowManager.LayoutParams.FLAG_FULLSCREEN,

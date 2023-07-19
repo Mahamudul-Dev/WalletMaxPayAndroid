@@ -47,19 +47,38 @@ class WebViewViewModel : ViewModel() {
 
     }
 
-    fun isForegroundServiceRunning(context: Context, serviceClass: Class<*>): Boolean {
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val runningServices = activityManager.getRunningServices(Integer.MAX_VALUE)
+    private fun isForegroundServiceRunning(context: Context, serviceClass: Class<*>): Boolean {
+//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
+            val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            val runningServices = activityManager.getRunningServices(Integer.MAX_VALUE)
 
-        for (serviceInfo in runningServices) {
-            if (serviceInfo.service.className == serviceClass.name) {
-                // The service is running
-                return true
+            for (serviceInfo in runningServices) {
+                if (serviceInfo.service.className == serviceClass.name) {
+                    // The service is running
+                    return true
+                }
             }
-        }
 
-        // The service is not running
-        return false
+            // The service is not running
+            return false
+//        } else {
+//            val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+//            val runningProcesses = activityManager.runningAppProcesses
+//
+//            for (processInfo in runningProcesses) {
+//                if (processInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+//                    // Check if the processInfo.processName matches the service's process name
+//                    val packageName = context.packageName
+//                    if (processInfo.processName == "$packageName:${serviceClass.simpleName}") {
+//                        // The service is running
+//                        return true
+//                    }
+//                }
+//            }
+//
+//            // The service is not running
+//            return false
+//        }
     }
 
     fun toggleSmsReading(context: Context) {

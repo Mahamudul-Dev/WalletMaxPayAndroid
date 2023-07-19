@@ -115,7 +115,7 @@ class SmsForegroundService : Service() {
 
         // Create the notification
         val notificationIntent = Intent(this, MainActivity::class.java) // Replace YourMainActivity with your app's main activity
-        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
         val notification = NotificationCompat.Builder(this, channelId)
                 .setContentTitle("Wallet Max Pay")
