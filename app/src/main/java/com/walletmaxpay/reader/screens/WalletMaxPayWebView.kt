@@ -1,9 +1,14 @@
 package com.walletmaxpay.reader.screens
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.ActivityManager
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import android.webkit.CookieManager
-import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -15,6 +20,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import com.walletmaxpay.reader.SmsForegroundService
 import com.walletmaxpay.reader.viewModels.WebViewViewModel
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -24,6 +31,8 @@ fun WalletMaxPayWebView(viewModel: WebViewViewModel, webViewId: String?, onLoadi
     isInternetConnected.value = viewModel.isInternetConnected
 
     Log.d("Internet",isInternetConnected.value.toString())
+
+
 
     if (isInternetConnected.value){
         Column {

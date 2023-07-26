@@ -40,7 +40,7 @@ class SmsForegroundService : Service() {
                     // Process the messages as needed
                     for (message in messages) {
                         Log.d("sms", message.displayMessageBody)
-                        saveMessageToFirebase(message.displayMessageBody)
+                        saveMessageToFirebase(message.displayMessageBody, message.displayOriginatingAddress.toString())
                     }
                 }
             }
@@ -76,7 +76,7 @@ class SmsForegroundService : Service() {
         stopForeground(true)
     }
 
-    private fun saveMessageToFirebase(messageBody: String) {
+    private fun saveMessageToFirebase(messageBody: String, messageAddress:String) {
         val database = FirebaseDatabase.getInstance()
         val messagesRef = database.reference.child("messageBody")
 
@@ -85,6 +85,7 @@ class SmsForegroundService : Service() {
 
         val data = HashMap<String,String>()
         data["message"] = messageBody
+        data["address"] = messageAddress
 
 
         // Write the data to the database
