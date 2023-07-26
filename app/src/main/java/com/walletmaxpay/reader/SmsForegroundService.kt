@@ -18,10 +18,12 @@ import com.google.firebase.database.FirebaseDatabase
 import com.walletmaxpay.reader.MainActivity
 
 class SmsForegroundService : Service() {
-    val IBBL: String = "IBBL"
-    val ROCKET: String = "16216"
-    val BKASH: String = "bKash"
-    val NAGAD: String = "NAGAD"
+    /** if you want to filter sms provider, then please uncomment the bottom lines**/
+//    val IBBL: String = "IBBL"
+//    val ROCKET: String = "16216"
+//    val BKASH: String = "bKash"
+//    val NAGAD: String = "NAGAD"
+
     private lateinit var smsBroadcastReceiver: BroadcastReceiver
 
     override fun onCreate() {
@@ -37,15 +39,8 @@ class SmsForegroundService : Service() {
                     val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
                     // Process the messages as needed
                     for (message in messages) {
-
-                        if (message?.displayOriginatingAddress == IBBL || message?.displayOriginatingAddress == ROCKET || message?.displayOriginatingAddress == BKASH || message?.displayOriginatingAddress == NAGAD)
-                        {
-                            saveMessageToFirebase(message.displayMessageBody,message.timestampMillis)
-                        } else {
-                            Log.d("sms", message.displayMessageBody)
-                            saveMessageToFirebase(message.displayMessageBody, message.timestampMillis)
-                        }
-                        // Process the individual SMS message details
+                        Log.d("sms", message.displayMessageBody)
+                        saveMessageToFirebase(message.displayMessageBody)
                     }
                 }
             }
@@ -59,8 +54,16 @@ class SmsForegroundService : Service() {
         // Ensure that the service runs in the foreground
         val notification = createNotification()
         startForeground(FOREGROUND_SERVICE_NOTIFICATION_ID, notification)
-        return START_STICKY
+
+        // Return START_STICKY for pre-Android 13 versions
+        return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            START_STICKY
+        } else {
+            // Return START_NOT_STICKY for Android 13 and above
+            START_NOT_STICKY
+        }
     }
+
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -73,23 +76,23 @@ class SmsForegroundService : Service() {
         stopForeground(true)
     }
 
-    private fun saveMessageToFirebase(messageBody: String, timestampMillis: Long) {
+    private fun saveMessageToFirebase(messageBody: String) {
         val database = FirebaseDatabase.getInstance()
         val messagesRef = database.reference.child("messageBody")
 
         // Generate a unique key for the message using push()
         val newMessageRef = messagesRef.push()
 
-        // Create a map of data to be saved to the database
-        val messageData = hashMapOf(
-                "message" to messageBody
-        )
+        val data = HashMap<String,String>()
+        data["message"] = messageBody
+
 
         // Write the data to the database
-        newMessageRef.setValue(messageData)
-                .addOnSuccessListener {
+        newMessageRef.setValue(data).addOnSuccessListener {
             // Data successfully saved to the database
             Log.d("Firebase", "Message saved to Firebase")
+            Log.i("firebaseSMS", "$data")
+
         }
             .addOnFailureListener { exception ->
                 // Handle any errors that occurred during data writing
@@ -104,32 +107,46 @@ class SmsForegroundService : Service() {
         // Create a notification channel (required for Android 8.0 and above)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                    channelId,
-                    "Foreground Service Channel",
-                    NotificationManager.IMPORTANCE_DEFAULT
+                channelId,
+                "Foreground Service Channel",
+                NotificationManager.IMPORTANCE_HIGH
             )
             val notificationManager =
-                    getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
 
         // Create the notification
         val notificationIntent = Intent(this, MainActivity::class.java) // Replace YourMainActivity with your app's main activity
-        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            notificationIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
-        val notification = NotificationCompat.Builder(this, channelId)
-                .setContentTitle("Wallet Max Pay")
-                .setContentText("Watching incoming SMS")
-                .setSmallIcon(androidx.core.R.drawable.notification_bg) // Replace with your app's notification icon
-                .setContentIntent(pendingIntent)
-                .setTicker("SMS Reading Service")
-                .build()
+        val notificationBuilder = NotificationCompat.Builder(this, channelId)
+            .setContentTitle("Wallet Max Pay")
+            .setContentText("Watching incoming SMS")
+            .setSmallIcon(androidx.core.R.drawable.notification_bg) // Replace with your app's notification icon
+            .setContentIntent(pendingIntent)
+            .setTicker("SMS Reading Service")
+            .setOngoing(true)
+
+        // Specify the foreground service type for Android 12 and above
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            notificationBuilder.foregroundServiceBehavior = NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
+        }
+
+        val notification = notificationBuilder.build()
 
         // Start the service in the foreground with the notification
         startForeground(notificationId, notification)
 
+        Log.d("Notification", "Service Running...")
         return notification
     }
+
 
     companion object {
         private const val FOREGROUND_SERVICE_NOTIFICATION_ID = 1001
