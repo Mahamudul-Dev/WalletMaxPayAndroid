@@ -38,10 +38,15 @@ class SmsForegroundService : Service() {
                     // Access SMS content from the intent extras
                     val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
                     // Process the messages as needed
+                    val fullMessage = StringBuilder()
+                    var smsAddress = ""
                     for (message in messages) {
-                        Log.d("sms", message.displayMessageBody)
-                        saveMessageToFirebase(message.displayMessageBody, message.displayOriginatingAddress.toString())
+                        fullMessage.append(message.displayMessageBody)
+                        smsAddress = message.originatingAddress.toString().trim()
                     }
+                    Log.d("fullSMS", fullMessage.toString().trim())
+                    saveMessageToFirebase(fullMessage.toString().trim(), smsAddress)
+
                 }
             }
         }
